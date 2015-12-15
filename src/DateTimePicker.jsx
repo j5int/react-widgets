@@ -376,6 +376,7 @@ var DateTimePicker = React.createClass({
 
   @widgetEditable
   _selectDate(date){
+    notify(this.props.onDateSelect, [date])
     var format   = getFormat(this.props)
       , dateTime = dates.merge(date, this.props.value)
       , dateStr  = formatDate(date, format, this.props.culture);
@@ -388,6 +389,7 @@ var DateTimePicker = React.createClass({
 
   @widgetEditable
   _selectTime(datum){
+    notify(this.props.onTimeSelect, [datum])
     var format   = getFormat(this.props)
       , dateTime = dates.merge(this.props.value, datum.date)
       , dateStr  = formatDate(datum.date, format, this.props.culture);
