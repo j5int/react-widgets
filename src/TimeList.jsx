@@ -117,10 +117,11 @@ export default React.createClass({
   _dates(props){
     var times  = [], i = 0
       , values = this._dateValues(props)
-      , start  = values.min
+      , start = new Date(1970, 0, 1)
+      , end = dates.add(start, 1, 'day')
       , startDay = dates.date(start);
 
-    while (dates.date(start) === startDay && dates.lte(start, values.max)) {
+    while (dates.date(start) === startDay && dates.lte(start, end)) {
       i++
       times.push({ date: start, label: dateLocalizer.format(start, format(props), props.culture) })
       start = dates.add(start, props.step || 30, 'minutes')
