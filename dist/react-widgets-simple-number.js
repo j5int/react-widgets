@@ -1,5 +1,15 @@
-/*! (c) 2015 Jason Quense | https://github.com/jquense/react-widgets/blob/master/License.txt */
-/******/ (function(modules) { // webpackBootstrap
+/*! (c) 2016 Jason Quense | https://github.com/jquense/react-widgets/blob/master/License.txt */
+(function webpackUniversalModuleDefinition(root, factory) {
+	if(typeof exports === 'object' && typeof module === 'object')
+		module.exports = factory(require("ReactWidgets"));
+	else if(typeof define === 'function' && define.amd)
+		define(["ReactWidgets"], factory);
+	else if(typeof exports === 'object')
+		exports["ReactWidgets"] = factory(require("ReactWidgets"));
+	else
+		root["ReactWidgets"] = factory(root["ReactWidgets"]);
+})(this, function(__WEBPACK_EXTERNAL_MODULE_85__) {
+return /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
 /******/ 	var installedModules = {};
 
@@ -41,26 +51,27 @@
 /******/ 	return __webpack_require__(0);
 /******/ })
 /************************************************************************/
-/******/ ([
-/* 0 */
+/******/ ({
+
+/***/ 0:
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var babelHelpers = __webpack_require__(1);
+	var babelHelpers = __webpack_require__(2);
 
 	exports.__esModule = true;
 	exports['default'] = simpleNumber;
 
-	var _configure = __webpack_require__(3);
+	var _configure = __webpack_require__(85);
 
 	var _configure2 = babelHelpers.interopRequireDefault(_configure);
 
-	var _formatNumberWithString = __webpack_require__(4);
+	var _formatNumberWithString = __webpack_require__(86);
 
 	var _formatNumberWithString2 = babelHelpers.interopRequireDefault(_formatNumberWithString);
 
-	var _deconstructNumberFormat = __webpack_require__(5);
+	var _deconstructNumberFormat = __webpack_require__(87);
 
 	var _deconstructNumberFormat2 = babelHelpers.interopRequireDefault(_deconstructNumberFormat);
 
@@ -111,7 +122,8 @@
 	module.exports = exports['default'];
 
 /***/ },
-/* 1 */
+
+/***/ 2:
 /***/ function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function (root, factory) {
@@ -211,20 +223,21 @@
 	})
 
 /***/ },
-/* 2 */,
-/* 3 */
+
+/***/ 85:
 /***/ function(module, exports) {
 
-	module.exports = window.ReactWidgets;
+	module.exports = __WEBPACK_EXTERNAL_MODULE_85__;
 
 /***/ },
-/* 4 */
+
+/***/ 86:
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var deconstructNumberFormat = __webpack_require__(5);
-	var formatFactory = __webpack_require__(6);
+	var deconstructNumberFormat = __webpack_require__(87);
+	var formatFactory = __webpack_require__(88);
 
 	exports = module.exports = function formatNumberWithString(value, requiredFormat, overrideOptions) {
 
@@ -260,7 +273,8 @@
 	};
 
 /***/ },
-/* 5 */
+
+/***/ 87:
 /***/ function(module, exports) {
 
 	'use strict';
@@ -465,7 +479,8 @@
 	};
 
 /***/ },
-/* 6 */
+
+/***/ 88:
 /***/ function(module, exports) {
 
 	
@@ -704,11 +719,19 @@
 	    var decim = number[1].slice(0, places);
 	    //if next digit was >= 5 we need to round up
 	    if (+(number[1].substr(places, 1)) >= 5) {
-	      decim = (+decim + 1) + ''
+	      //But first count leading zeros as converting to a number will loose them
+	      var leadingzeros = "";
+	      while (decim.charAt(0)==="0") {
+	        leadingzeros = leadingzeros + "0";
+	        decim = decim.substr(1);
+	      }
+	      //Then we can change decim to a number and add 1 before replacing leading zeros
+	      decim = (+decim + 1) + '';
+	      decim = leadingzeros + decim;
 	      if (decim.length > places) {
 	        //adding one has made it longer
-	        decim = decim.substring(1);   //ignore the 1 at the beginning which is the carry to the integer part
-	        number[0] = (+number[0]+1) + '' //add 1 to the integer part
+	        number[0] = (+number[0]+ +decim.charAt(0)) + ''; //add value of firstchar to the integer part
+	        decim = decim.substring(1);   //ignore the 1st char at the beginning which is the carry to the integer part
 	      }
 	    }
 	    number[1] = decim;
@@ -718,4 +741,7 @@
 
 
 /***/ }
-/******/ ]);
+
+/******/ })
+});
+;
