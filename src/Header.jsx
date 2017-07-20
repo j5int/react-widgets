@@ -1,22 +1,23 @@
 import React from 'react';
-import Btn from './WidgetButton';
+import PropTypes from 'prop-types';
+import Button from './Button';
 
 export default React.createClass({
   displayName: 'Header',
   propTypes: {
-    label:          React.PropTypes.string.isRequired,
-    labelId:        React.PropTypes.string,
+    label:          PropTypes.string.isRequired,
+    labelId:        PropTypes.string,
 
-    upDisabled:     React.PropTypes.bool.isRequired,
-    prevDisabled:   React.PropTypes.bool.isRequired,
-    nextDisabled:   React.PropTypes.bool.isRequired,
-    onViewChange:   React.PropTypes.func.isRequired,
-    onMoveLeft:     React.PropTypes.func.isRequired,
-    onMoveRight:    React.PropTypes.func.isRequired,
+    upDisabled:     PropTypes.bool.isRequired,
+    prevDisabled:   PropTypes.bool.isRequired,
+    nextDisabled:   PropTypes.bool.isRequired,
+    onViewChange:   PropTypes.func.isRequired,
+    onMoveLeft:     PropTypes.func.isRequired,
+    onMoveRight:    PropTypes.func.isRequired,
 
-    messages:       React.PropTypes.shape({
-      moveBack:     React.PropTypes.string,
-      moveForward:  React.PropTypes.string
+    messages:       PropTypes.shape({
+      moveBack:     PropTypes.string,
+      moveForward:  PropTypes.string
     })
   },
 
@@ -44,42 +45,30 @@ export default React.createClass({
 
     return (
       <div className='rw-header'>
-        <Btn className="rw-btn-left"
-          tabIndex='-1'
+        <Button
+          className="rw-btn-left"
           onClick={onMoveLeft}
           disabled={prevDisabled}
-          aria-disabled={prevDisabled}
-          aria-label={messages.moveBack}
-          title={messages.moveBack}
-        >
-          <i aria-hidden='false'
-            className={'rw-i rw-i-caret-' + (rtl ? 'right' : 'left')}
-          />
-        </Btn>
-        <Btn
+          label={messages.moveBack}
+          icon={`caret-${rtl ? 'right' : 'left'}`}
+        />
+        <Button
           id={labelId}
-          tabIndex='-1'
+          onClick={onViewChange}
           className="rw-btn-view"
           disabled={upDisabled}
-          aria-disabled={upDisabled}
           aria-live="polite"
           aria-atomic="true"
-          onClick={onViewChange}
         >
           { label }
-        </Btn>
-        <Btn className="rw-btn-right"
-          tabIndex='-1'
+        </Button>
+        <Button
+          className="rw-btn-right"
           onClick={onMoveRight}
           disabled={nextDisabled}
-          title={messages.moveForward}
-          aria-label={messages.moveForward}
-          aria-disabled={nextDisabled}
-        >
-          <i aria-hidden='false'
-            className={'rw-i rw-i-caret-' + (rtl ? 'left' : 'right')}
-          />
-        </Btn>
+          label={messages.moveForward}
+          icon={`caret-${rtl ? 'left' : 'right'}`}
+        />
       </div>
     )
   }

@@ -1,4 +1,4 @@
-/*! (c) 2015 Jason Quense | https://github.com/jquense/react-widgets/blob/master/License.txt */
+/*! (c) 2017 Jason Quense | https://github.com/jquense/react-widgets/blob/master/License.txt */
 /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
 /******/ 	var installedModules = {};
@@ -43,43 +43,67 @@
 /************************************************************************/
 /******/ ([
 /* 0 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
+
+	/*** IMPORTS FROM imports-loader ***/
+	var module = __webpack_require__(1);
+	var args = [];
+
+
+	if (typeof module === 'function') {
+	  module.apply(null, args || [])
+	}
+
+
+
+/***/ }),
+/* 1 */
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var babelHelpers = __webpack_require__(1);
-
 	exports.__esModule = true;
-	exports['default'] = simpleNumber;
 
-	var _configure = __webpack_require__(3);
+	var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
-	var _configure2 = babelHelpers.interopRequireDefault(_configure);
+	exports.default = simpleNumber;
 
-	var _formatNumberWithString = __webpack_require__(4);
+	var _configure = __webpack_require__(2);
 
-	var _formatNumberWithString2 = babelHelpers.interopRequireDefault(_formatNumberWithString);
+	var _configure2 = _interopRequireDefault(_configure);
 
-	var _deconstructNumberFormat = __webpack_require__(5);
+	var _formatNumberWithString = __webpack_require__(3);
 
-	var _deconstructNumberFormat2 = babelHelpers.interopRequireDefault(_deconstructNumberFormat);
+	var _formatNumberWithString2 = _interopRequireDefault(_formatNumberWithString);
 
-	function simpleNumber() {
+	var _deconstructNumberFormat = __webpack_require__(4);
+
+	var _deconstructNumberFormat2 = _interopRequireDefault(_deconstructNumberFormat);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	var defaults = {
+	  decimal: '.',
+	  grouping: ','
+	};
+
+	function simpleNumber(options) {
+	  var _defaults$options = _extends({}, defaults, options),
+	      decimal = _defaults$options.decimal,
+	      grouping = _defaults$options.grouping;
 
 	  var localizer = {
 	    formats: {
-	      'default': '-#,##0.'
+	      default: '-#' + grouping + '##0' + decimal
 	    },
 
-	    parse: function parse(value, format) {
+	    // TODO major bump consistent ordering
+	    parse: function parse(value, culture, format) {
 	      if (format) {
-	        var data = _deconstructNumberFormat2['default'](format);
+	        var data = (0, _deconstructNumberFormat2.default)(format),
+	            negative = data.negativeLeftSymbol && value.indexOf(data.negativeLeftSymbol) !== -1 || data.negativeRightSymbol && value.indexOf(data.negativeRightSymbol) !== -1;
 
-	        if (data.negativeLeftPos !== -1) value = value.substr(data.negativeLeftPos + 1);
-
-	        if (data.negativeRightPos !== -1) value = value.substring(0, data.negativeRightPos);
-
-	        value = value.replace(data.prefix, '').replace(data.suffix, '');
+	        value = value.replace(data.negativeLeftSymbol, '').replace(data.negativeRightSymbol, '').replace(data.prefix, '').replace(data.suffix, '');
 
 	        var halves = value.split(data.decimalChar);
 
@@ -87,144 +111,47 @@
 
 	        if (data.decimalsSeparator) halves[1] = halves[1].replace(new RegExp('\\' + data.decimalsSeparator, 'g'));
 
-	        value = halves.join(data.decimalChar);
-	      }
-	      var number = parseFloat(value);
+	        if (halves[1] === '') halves.pop();
 
-	      return number;
+	        value = halves.join('.');
+	        value = +value;
+
+	        if (negative) value = -1 * value;
+	      } else value = parseFloat(value);
+
+	      return isNaN(value) ? null : value;
 	    },
-
 	    format: function format(value, _format) {
-	      return _formatNumberWithString2['default'](value, _format);
+	      return (0, _formatNumberWithString2.default)(value, _format);
 	    },
-
+	    decimalChar: function decimalChar(format) {
+	      return format && (0, _deconstructNumberFormat2.default)(format).decimalsSeparator || '.';
+	    },
 	    precision: function precision(format) {
-	      var data = _deconstructNumberFormat2['default'](format);
+	      var data = (0, _deconstructNumberFormat2.default)(format);
 	      return data.maxRight !== -1 ? data.maxRight : null;
 	    }
 	  };
 
-	  _configure2['default'].setNumberLocalizer(localizer);
+	  _configure2.default.setNumberLocalizer(localizer);
 	  return localizer;
 	}
-
 	module.exports = exports['default'];
 
-/***/ },
-/* 1 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function (root, factory) {
-	  if (true) {
-	    !(__WEBPACK_AMD_DEFINE_ARRAY__ = [exports], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory), __WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ? (__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
-	  } else if (typeof exports === "object") {
-	    factory(exports);
-	  } else {
-	    factory(root.babelHelpers = {});
-	  }
-	})(this, function (global) {
-	  var babelHelpers = global;
-
-	  babelHelpers.createDecoratedObject = function (descriptors) {
-	    var target = {};
-
-	    for (var i = 0; i < descriptors.length; i++) {
-	      var descriptor = descriptors[i];
-	      var decorators = descriptor.decorators;
-	      var key = descriptor.key;
-	      delete descriptor.key;
-	      delete descriptor.decorators;
-	      descriptor.enumerable = true;
-	      descriptor.configurable = true;
-	      if ("value" in descriptor || descriptor.initializer) descriptor.writable = true;
-
-	      if (decorators) {
-	        for (var f = 0; f < decorators.length; f++) {
-	          var decorator = decorators[f];
-
-	          if (typeof decorator === "function") {
-	            descriptor = decorator(target, key, descriptor) || descriptor;
-	          } else {
-	            throw new TypeError("The decorator for method " + descriptor.key + " is of the invalid type " + typeof decorator);
-	          }
-	        }
-	      }
-
-	      if (descriptor.initializer) {
-	        descriptor.value = descriptor.initializer.call(target);
-	      }
-
-	      Object.defineProperty(target, key, descriptor);
-	    }
-
-	    return target;
-	  };
-
-	  babelHelpers.objectWithoutProperties = function (obj, keys) {
-	    var target = {};
-
-	    for (var i in obj) {
-	      if (keys.indexOf(i) >= 0) continue;
-	      if (!Object.prototype.hasOwnProperty.call(obj, i)) continue;
-	      target[i] = obj[i];
-	    }
-
-	    return target;
-	  };
-
-	  babelHelpers.interopRequireWildcard = function (obj) {
-	    if (obj && obj.__esModule) {
-	      return obj;
-	    } else {
-	      var newObj = {};
-
-	      if (obj != null) {
-	        for (var key in obj) {
-	          if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key];
-	        }
-	      }
-
-	      newObj["default"] = obj;
-	      return newObj;
-	    }
-	  };
-
-	  babelHelpers.interopRequireDefault = function (obj) {
-	    return obj && obj.__esModule ? obj : {
-	      "default": obj
-	    };
-	  };
-
-	  babelHelpers._extends = Object.assign || function (target) {
-	    for (var i = 1; i < arguments.length; i++) {
-	      var source = arguments[i];
-
-	      for (var key in source) {
-	        if (Object.prototype.hasOwnProperty.call(source, key)) {
-	          target[key] = source[key];
-	        }
-	      }
-	    }
-
-	    return target;
-	  };
-	})
-
-/***/ },
-/* 2 */,
-/* 3 */
-/***/ function(module, exports) {
+/***/ }),
+/* 2 */
+/***/ (function(module, exports) {
 
 	module.exports = window.ReactWidgets;
 
-/***/ },
-/* 4 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ }),
+/* 3 */
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var deconstructNumberFormat = __webpack_require__(5);
-	var formatFactory = __webpack_require__(6);
+	var deconstructNumberFormat = __webpack_require__(4);
+	var formatFactory = __webpack_require__(5);
 
 	exports = module.exports = function formatNumberWithString(value, requiredFormat, overrideOptions) {
 
@@ -259,9 +186,9 @@
 
 	};
 
-/***/ },
-/* 5 */
-/***/ function(module, exports) {
+/***/ }),
+/* 4 */
+/***/ (function(module, exports) {
 
 	'use strict';
 
@@ -464,9 +391,9 @@
 	  return deconstructedFormat;
 	};
 
-/***/ },
-/* 6 */
-/***/ function(module, exports) {
+/***/ }),
+/* 5 */
+/***/ (function(module, exports) {
 
 	
 	module.exports = formatter;
@@ -704,11 +631,19 @@
 	    var decim = number[1].slice(0, places);
 	    //if next digit was >= 5 we need to round up
 	    if (+(number[1].substr(places, 1)) >= 5) {
-	      decim = (+decim + 1) + ''
+	      //But first count leading zeros as converting to a number will loose them
+	      var leadingzeros = "";
+	      while (decim.charAt(0)==="0") {
+	        leadingzeros = leadingzeros + "0";
+	        decim = decim.substr(1);
+	      }
+	      //Then we can change decim to a number and add 1 before replacing leading zeros
+	      decim = (+decim + 1) + '';
+	      decim = leadingzeros + decim;
 	      if (decim.length > places) {
 	        //adding one has made it longer
-	        decim = decim.substring(1);   //ignore the 1 at the beginning which is the carry to the integer part
-	        number[0] = (+number[0]+1) + '' //add 1 to the integer part
+	        number[0] = (+number[0]+ +decim.charAt(0)) + ''; //add value of firstchar to the integer part
+	        decim = decim.substring(1);   //ignore the 1st char at the beginning which is the carry to the integer part
 	      }
 	    }
 	    number[1] = decim;
@@ -717,5 +652,5 @@
 	}
 
 
-/***/ }
+/***/ })
 /******/ ]);

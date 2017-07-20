@@ -1,8 +1,14 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import activeElement from 'dom-helpers/activeElement';
-import contains from'dom-helpers/query/contains';
+import contains from 'dom-helpers/query/contains';
 import cx from 'classnames';
 import _  from './util/_';
+
+import Widget from './Widget';
+import Input from './Input';
+import Select from './Select';
+import DropdownListInput from './DropdownListInput';
 import Popup           from './Popup';
 import compat          from './util/compat';
 import CustomPropTypes from './util/propTypes';
@@ -11,22 +17,24 @@ import GroupableList   from './ListGroupable';
 import validateList    from './util/validateListInterface';
 import createUncontrolledWidget from 'uncontrollable';
 
-import { dataItem, dataText, dataIndexOf, valueMatcher } from './util/dataHelpers';
-import { widgetEditable, widgetEnabled, isDisabled, isReadOnly } from './util/interaction';
+import { dataItem, dataIndexOf, valueMatcher } from './util/dataHelpers';
+import { widgetEditable, isDisabled, isReadOnly } from './util/interaction';
 import { instanceId, notify, isFirstFocusedRender } from './util/widgetHelpers';
 
-let { omit, pick, result } = _;
+let { result } = _;
 
 var propTypes = {
+  ...Popup.propTypes,
+
   //-- controlled props -----------
-  value:          React.PropTypes.any,
-  onChange:       React.PropTypes.func,
-  open:           React.PropTypes.bool,
-  onToggle:       React.PropTypes.func,
+  value:          PropTypes.any,
+  onChange:       PropTypes.func,
+  open:           PropTypes.bool,
+  onToggle:       PropTypes.func,
   //------------------------------------
 
-  data:           React.PropTypes.array,
-  valueField:     React.PropTypes.string,
+  data:           PropTypes.array,
+  valueField:     PropTypes.string,
   textField:      CustomPropTypes.accessor,
 
   valueComponent: CustomPropTypes.elementType,
@@ -36,22 +44,18 @@ var propTypes = {
   groupComponent: CustomPropTypes.elementType,
   groupBy:        CustomPropTypes.accessor,
 
-  onSelect:       React.PropTypes.func,
-
-  searchTerm:     React.PropTypes.string,
-  onSearch:       React.PropTypes.func,
-
-  busy:           React.PropTypes.bool,
-
-  delay:          React.PropTypes.number,
-
-  dropUp:         React.PropTypes.bool,
-  duration:       React.PropTypes.number, //popup
+  onSelect:       PropTypes.func,
+  searchTerm:     PropTypes.string,
+  onSearch:       PropTypes.func,
+  busy:           PropTypes.bool,
+  delay:          PropTypes.number,
+  dropUp:         PropTypes.bool,
+  duration:       PropTypes.number, //popup
 
   disabled:       CustomPropTypes.disabled.acceptsArray,
   readOnly:       CustomPropTypes.readOnly.acceptsArray,
 
-  messages:       React.PropTypes.shape({
+  messages:       PropTypes.shape({
     open:              CustomPropTypes.message,
     emptyList:         CustomPropTypes.message,
     emptyFilter:       CustomPropTypes.message,
@@ -65,11 +69,17 @@ var DropdownList = React.createClass({
 
   mixins: [
     require('./mixins/TimeoutMixin'),
+    require('./mixins/AutoFocusMixin'),
     require('./mixins/PureRenderMixin'),
     require('./mixins/DataFilterMixin'),
     require('./mixins/PopupScrollToMixin'),
     require('./mixins/RtlParentContextMixin'),
-    require('./mixins/AriaDescendantMixin')()
+    require('./mixins/AriaDescendantMixin')(),
+    require('./mixins/FocusMixin')({
+      didHandle(focused) {
+        if (!focused) this.close()
+      }
+    })
   ],
 
   propTypes: propTypes,
@@ -117,134 +127,142 @@ var DropdownList = React.createClass({
     })
   },
 
+  renderFilter(messages){
+    return (
+      <div ref='filterWrapper' className='rw-filter-input'>
+        <Select component='span' icon='search' />
+        <Input
+          ref='filter'
+          value={this.props.searchTerm}
+          placeholder={_.result(messages.filterPlaceholder, this.props)}
+          onChange={e => notify(this.props.onSearch, e.target.value)}
+        />
+
+      </div>
+    )
+  },
+
+  renderList(List, id, messages) {
+    let { open, filter, data } = this.props;
+    let { selectedItem, focusedItem } = this.state;
+
+    let listProps = _.pickProps(this.props, List);
+    let items = this._data();
+
+    return (
+      <div>
+        { filter && this.renderFilter(messages) }
+
+        <List
+          {...listProps}
+          ref="list"
+          id={id}
+          data={items}
+          aria-live={open && 'polite'}
+          aria-labelledby={instanceId(this)}
+          aria-hidden={!this.props.open}
+          selected={selectedItem}
+          focused ={open ? focusedItem : null}
+          onSelect={this.handleSelect}
+          onMove={this._scrollTo}
+          messages={{
+            emptyList: data.length
+              ? messages.emptyFilter
+              : messages.emptyList
+          }}/>
+      </div>
+    )
+  },
+
   render() {
     let {
-        className, tabIndex, filter
-      , valueField, textField, groupBy
-      , messages, data, busy, dropUp
+        className
+      , tabIndex
+      , duration
+      , valueField
+      , textField
+      , groupBy
+      , messages
+      , data
+      , busy
+      , dropUp
       , placeholder, value, open
-      , valueComponent: ValueComponent
+      , valueComponent
       , listComponent: List } = this.props;
 
     List = List || (groupBy && GroupableList) || PlainList
 
-    let elementProps = omit(this.props, Object.keys(propTypes));
-    let listProps    = pick(this.props, Object.keys(List.propTypes));
-    let popupProps   = pick(this.props, Object.keys(Popup.propTypes));
+    let { focused } = this.state;
 
-    let { focusedItem, selectedItem, focused } = this.state;
-
-    let items = this._data()
-      , disabled = isDisabled(this.props)
+    let disabled = isDisabled(this.props)
       , readOnly = isReadOnly(this.props)
       , valueItem = dataItem(data, value, valueField) // take value from the raw data
       , listID = instanceId(this, '__listbox');
 
-    let shouldRenderList = isFirstFocusedRender(this) || open;
+    let elementProps = Object.assign(_.omitOwnProps(this, List), {
+      role: 'combobox',
+      tabIndex: tabIndex || 0,
+      'aria-owns': listID,
+      'aria-expanded': !!open,
+      'aria-haspopup': true,
+      'aria-busy': !!busy,
+      'aria-live': !open && 'polite',
+      'aria-autocomplete': 'list',
+      'aria-disabled': disabled,
+      'aria-readonly': readOnly
+    });
+
+    let shouldRenderPopup = open || isFirstFocusedRender(this);
 
     messages = msgs(messages)
 
     return (
-      <div {...elementProps}
+      <Widget
+        {...elementProps}
         ref="input"
-        role='combobox'
-        tabIndex={tabIndex || '0'}
-        aria-expanded={open }
-        aria-haspopup={true}
-        aria-owns={listID}
-        aria-busy={!!busy}
-        aria-live={!open && 'polite'}
-        aria-autocomplete="list"
-        aria-disabled={disabled }
-        aria-readonly={readOnly }
-        onKeyDown={this._keyDown}
-        onKeyPress={this._keyPress}
-        onClick={this._click}
-        onFocus={this._focus.bind(null, true)}
-        onBlur ={this._focus.bind(null, false)}
-        className={cx(className, 'rw-dropdownlist', 'rw-widget', {
-          'rw-state-disabled':  disabled,
-          'rw-state-readonly':  readOnly,
-          'rw-state-focus':     focused,
-          'rw-rtl':             this.isRtl(),
+        className={cx(className, 'rw-dropdownlist')}
+        open={open}
+        dropUp={dropUp}
+        focused={focused}
+        disabled={disabled}
+        readOnly={readOnly}
+        onBlur={this.handleBlur}
+        onFocus={this.handleFocus}
+        onClick={this.handleClick}
+        onKeyDown={this.handleKeyDown}
+        onKeyPress={this.handleKeyPress}
+      >
+        <Select
+          busy={busy}
+          icon="caret-down"
+          component='span'
+          className="rw-dropdownlist-picker"
+          label={result(messages.open, this.props)}
+        />
+        <DropdownListInput
+          value={valueItem}
+          textField={textField}
+          placeholder={placeholder}
+          valueComponent={valueComponent}
+        />
 
-          ['rw-open' + (dropUp ? '-up' : '')]: open
-        })}>
-
-        <span className="rw-dropdownlist-picker rw-select rw-btn">
-          <i className={'rw-i rw-i-caret-down' + (busy ? ' rw-loading' : '')}>
-            <span className="rw-sr">
-              { result(messages.open, this.props) }
-            </span>
-          </i>
-        </span>
-        <div
-          className="rw-input"
-        >
-          { !valueItem && placeholder
-            ? <span className='rw-placeholder'>{placeholder}</span>
-            : this.props.valueComponent
-              ? <ValueComponent item={valueItem}/>
-              : dataText(valueItem, textField)
-          }
-        </div>
-        <Popup {...popupProps}
-          onOpen={() => this.focus() }
-          onOpening={() => this.refs.list.forceUpdate() }
-        >
-          <div>
-            { filter && this._renderFilter(messages) }
-            { shouldRenderList &&
-              <List ref="list"
-                {...listProps}
-                data={items}
-                id={listID}
-                aria-live={open && 'polite'}
-                aria-labelledby={instanceId(this)}
-                aria-hidden={!this.props.open}
-                selected={selectedItem}
-                focused ={open ? focusedItem : null}
-                onSelect={this._onSelect}
-                onMove={this._scrollTo}
-                messages={{
-                  emptyList: data.length
-                    ? messages.emptyFilter
-                    : messages.emptyList
-                }}/>
-            }
-          </div>
-        </Popup>
-      </div>
+        {shouldRenderPopup &&
+          <Popup
+            open={open}
+            dropUp={dropUp}
+            duration={duration}
+            onOpen={() => this.focus()}
+            onOpening={() => this.refs.list.forceUpdate()}
+          >
+            {this.renderList(List, listID, messages)}
+          </Popup>
+        }
+      </Widget>
     )
-  },
-
-  _renderFilter(messages){
-    return (
-      <div ref='filterWrapper' className='rw-filter-input'>
-        <span className='rw-select rw-btn'><i className='rw-i rw-i-search'/></span>
-        <input ref='filter' className='rw-input'
-          placeholder={_.result(messages.filterPlaceholder, this.props)}
-          value={this.props.searchTerm }
-          onChange={ e => notify(this.props.onSearch, e.target.value)}/>
-      </div>
-    )
-  },
-
-  @widgetEnabled
-  _focus(focused, e){
-
-    this.setTimeout('focus', () => {
-      if (!focused) this.close()
-
-      if (focused !== this.state.focused) {
-        notify(this.props[focused ? 'onFocus' : 'onBlur'], e)
-        this.setState({ focused: focused })
-      }
-    })
   },
 
   @widgetEditable
-  _onSelect(data){
+  handleSelect(data){
     this.close()
     notify(this.props.onSelect, data)
     this.change(data)
@@ -252,7 +270,7 @@ var DropdownList = React.createClass({
   },
 
   @widgetEditable
-  _click(e){
+  handleClick(e){
     var wrapper = this.refs.filterWrapper
 
     if( !this.props.filter || !this.props.open )
@@ -265,9 +283,8 @@ var DropdownList = React.createClass({
   },
 
   @widgetEditable
-  _keyDown(e){
-    var self = this
-      , key = e.key
+  handleKeyDown(e){
+    var key = e.key
       , alt = e.altKey
       , list = this.refs.list
       , filtering = this.props.filter
@@ -278,24 +295,39 @@ var DropdownList = React.createClass({
 
     notify(this.props.onKeyDown, [e])
 
+    let change = (item, fromList) => {
+      if(item == null) return
+      fromList
+        ? this.handleSelect(item)
+        : this.change(item)
+    }
+
     if (e.defaultPrevented)
       return
 
     if (key === 'End') {
+      e.preventDefault()
+
       if (isOpen) this.setState({ focusedItem: list.last() })
       else        change(list.last())
-      e.preventDefault()
     }
     else if (key === 'Home') {
+      e.preventDefault()
+
       if (isOpen) this.setState({ focusedItem: list.first() })
       else        change(list.first())
-      e.preventDefault()
     }
     else if (key === 'Escape' && isOpen) {
+      e.preventDefault();
       closeWithFocus()
     }
     else if ((key === 'Enter' || (key === ' ' && !filtering)) && isOpen ) {
+      e.preventDefault();
       change(this.state.focusedItem, true)
+    }
+    else if (key === ' ' && !filtering && !isOpen) {
+      e.preventDefault();
+      this.open()
     }
     else if (key === 'ArrowDown') {
       if (alt)         this.open()
@@ -309,17 +341,10 @@ var DropdownList = React.createClass({
       else             change(list.prev(selectedItem))
       e.preventDefault()
     }
-
-    function change(item, fromList){
-      if(!item) return
-      fromList
-        ? self._onSelect(item)
-        : self.change(item)
-    }
   },
 
   @widgetEditable
-  _keyPress(e) {
+  handleKeyPress(e) {
     notify(this.props.onKeyPress, [e])
 
     if (e.defaultPrevented)
@@ -342,10 +367,13 @@ var DropdownList = React.createClass({
   },
 
   focus(target){
-    var inst = target || (this.props.filter && this.props.open ? this.refs.filter : this.refs.input);
+    let { filter, open } = this.props;
+    let inst = target || (filter && open ? this.refs.filter : this.refs.input);
 
-    if (activeElement() !== compat.findDOMNode(inst))
-      compat.findDOMNode(inst).focus()
+    inst = compat.findDOMNode(inst);
+
+    if (activeElement() !== inst)
+      inst.focus()
   },
 
   _data() {
@@ -398,4 +426,4 @@ function msgs(msgs){
 }
 
 export default createUncontrolledWidget(
-    DropdownList, { open: 'onToggle', value: 'onChange', searchTerm: 'onSearch' });
+    DropdownList, { open: 'onToggle', value: 'onChange', searchTerm: 'onSearch' }, ['focus']);

@@ -1,20 +1,20 @@
-'use strict';
-var React   = require('react')
-  , ReplaceTransitionGroup  = require('./ReplaceTransitionGroup')
-  , compat = require('./util/compat')
-  , css = require('dom-helpers/style')
-  , getWidth  = require('dom-helpers/query/width')
-  , config = require('./util/configuration');
-
+import React  from 'react';
+import PropTypes from 'prop-types';
+import ReplaceTransitionGroup  from './ReplaceTransitionGroup';
+import compat from './util/compat';
+import css from 'dom-helpers/style';
+import getWidth from 'dom-helpers/query/width';
+import config from './util/configuration';
+import _ from './util/_';
 
 var SlideChildGroup = React.createClass({
 
   propTypes: {
-    direction: React.PropTypes.oneOf(['left', 'right']),
-    duration:  React.PropTypes.number
+    direction: PropTypes.oneOf(['left', 'right']),
+    duration:  PropTypes.number
   },
 
-  componentWillEnter: function(done) {
+  componentWillEnter(done) {
     var node  = compat.findDOMNode(this)
       , width = getWidth(node)
       , direction = this.props.direction;
@@ -37,7 +37,7 @@ var SlideChildGroup = React.createClass({
       })
   },
 
-  componentWillLeave: function(done) {
+  componentWillLeave(done) {
     var node  = compat.findDOMNode(this)
       , width = getWidth(node)
       , direction = this.props.direction;
@@ -59,28 +59,27 @@ var SlideChildGroup = React.createClass({
       })
   },
 
-  render: function() {
+  render() {
     return React.Children.only(this.props.children);
   }
-
 })
 
 
 module.exports = React.createClass({
 
   propTypes: {
-    direction: React.PropTypes.oneOf(['left', 'right']),
-    duration:  React.PropTypes.number
+    direction: PropTypes.oneOf(['left', 'right']),
+    duration:  PropTypes.number
   },
 
-  getDefaultProps: function(){
+  getDefaultProps(){
     return {
       direction: 'left',
       duration: 250
     }
   },
 
-  _wrapChild: function(child, ref) {
+  _wrapChild(child, ref) {
     return (
       <SlideChildGroup key={child.key} ref={ref}
         direction={this.props.direction}
@@ -89,24 +88,25 @@ module.exports = React.createClass({
       </SlideChildGroup>)
   },
 
-  render: function() {
-    var { style, children, ...props } = this.props
+  render() {
+    var { style, children } = this.props
 
-    style = Object.assign({}, style, { position: 'relative', overflow: 'hidden' })
+    style = {
+      ...style,
+      position: 'relative',
+      overflow: 'hidden'
+    };
 
     return (
       <ReplaceTransitionGroup
-        {...props}
+        {..._.omitOwnProps(this)}
         ref='container'
+        component={'div'}
         childFactory={this._wrapChild}
         style={style}
-        component={'div'}>
+      >
         { children }
-      </ReplaceTransitionGroup>)
-  },
-
-  isTransitioning: function(){
-    return this.isMounted() && this.refs.container.isTransitioning()
+      </ReplaceTransitionGroup>
+    )
   }
 });
-

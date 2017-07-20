@@ -1,4 +1,5 @@
-import React, { PropTypes } from 'react';
+import React from 'react';
+import PropTypes from 'prop-types';
 import localizers from './localizers';
 import filters from'./filter';
 
@@ -41,27 +42,27 @@ module.exports = {
   disabled: getInteractionPropType('disabled'),
   readOnly: getInteractionPropType('readOnly'),
 
-  accessor:     React.PropTypes.oneOfType([
-                    React.PropTypes.string,
-                    React.PropTypes.func
+  accessor:     PropTypes.oneOfType([
+                    PropTypes.string,
+                    PropTypes.func
                   ]),
 
-  message:      React.PropTypes.oneOfType([
-                  React.PropTypes.func,
-                  React.PropTypes.string
+  message:      PropTypes.oneOfType([
+                  PropTypes.node,
+                  PropTypes.string
                 ]),
 
-  filter:       React.PropTypes.oneOfType([
-                  React.PropTypes.func,
-                  React.PropTypes.bool,
-                  React.PropTypes.oneOf(filterTypes)
+  filter:       PropTypes.oneOfType([
+                  PropTypes.func,
+                  PropTypes.bool,
+                  PropTypes.oneOf(filterTypes)
                 ])
 }
 
 
 function createChainableTypeChecker(validate) {
 
-  function checkType(isRequired, props, propName, componentName, location) {
+  function checkType(isRequired, props, propName, componentName, ...args) {
     componentName = componentName || '<<anonymous>>';
     if (props[propName] == null) {
       if (isRequired) {
@@ -70,7 +71,7 @@ function createChainableTypeChecker(validate) {
       }
     }
     else
-      return validate(props, propName, componentName, location);
+      return validate(props, propName, componentName, ...args);
   }
 
   var chainedCheckType = checkType.bind(null, false);

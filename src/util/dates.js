@@ -1,11 +1,9 @@
 import dateMath from 'date-arithmetic';
-import constants from './constants';
+import { directions, calendarViewUnits } from './constants';
 import { date as dateLocalizer } from './localizers';
 
-let { directions, calendarViewUnits } = constants
 
-
-var dates = Object.assign(dateMath, {
+var dates = Object.assign({}, dateMath, {
 
   parse(date, format, culture) {
     return dateLocalizer.parse(date, format, culture)
@@ -64,12 +62,12 @@ var dates = Object.assign(dateMath, {
       : date
   },
 
-  merge(date, time){
+  merge(date, time, defaultDate){
     if( time == null && date == null)
       return null
 
-    if( time == null) time = new Date()
-    if( date == null) date = new Date()
+    if( time == null) time = defaultDate || new Date()
+    if( date == null) date = defaultDate || new Date()
 
     date = dates.startOf(date, 'day')
     date = dates.hours(date,        dates.hours(time))

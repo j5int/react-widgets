@@ -3,7 +3,7 @@
 React-widgets offers a set of html form inputs, built from scratch with React. The suite is based on the excellent
 work done by Kendo UI Core, and jQuery UI, but built as true components, and not library wrappers. By
 building each widget entirely in React, it can leverage all of the benefits of the React ecosystem
-and [philosophy](http://facebook.github.io/react/blog/2013/11/05/thinking-in-react.html). A big thanks to both of these libraries for solving most of the difficult problems already.
+and [philosophy](http://facebook.github.io/react/docs/thinking-in-react.html). A big thanks to both of these libraries for solving most of the difficult problems already.
 
 In keeping with the [React approach](http://facebook.github.io/react/docs/forms.html#controlled-components) to
 form input components, each widget can be [_controlled_ or _uncontrolled_](controllables).
@@ -49,19 +49,33 @@ import DropdownList from 'react-widgets/lib/DropdownList';
 render(<DropdownList/>, document.getElementById('app-root'))
 ```
 
-If are using Webpack to handle styles in your application you are probably already configured to load
-the `react-widgets` styles without any additional work. If not, you will have to use
-the `css-loader`, `style-loader`, `file-loader`, `url-loader` and, optionally, the `less-loader`.
+If are using Webpack to handle styles in your application you are probably already configured
+loaders to make it work with appropriate file extensions. If not, you will have to use
+the `css-loader`, `style-loader`, `file-loader`, `url-loader` and, optionally, the `less-loader` or
+`scss-loader`.
+
 Below is a common configuration:
 
 ```js
 loaders: [
   { test: /\\.css$/,  loader: "style-loader!css-loader" },
-  { test: /\\.less$/, loader: "style-loader!css-loader!less-loader" },
+  { test: /\\.less$/, loader: "style-loader!css-loader!less-loader" }, // using less
+  // { test: /\\.scss$/, loader: "style-loader!css-loader!scss-loader" }, // using scss
   { test: /\\.gif$/, loader: "url-loader?mimetype=image/png" },
-  { test: /\\.woff(2)?(\\?v=[0-9]\.[0-9]\.[0-9])?$/, loader: "url-loader?mimetype=application/font-woff" },
-  { test: /\\.(ttf|eot|svg)(\\?v=[0-9]\.[0-9]\.[0-9])?$/, loader: "file-loader?name=[name].[ext]" },
+  { test: /\\.woff(2)?(\\?v=[0-9]+\\.[0-9]+\\.[0-9]+)?$/, loader: "url-loader?mimetype=application/font-woff" },
+  { test: /\\.(ttf|eot|svg)(\\?v=[0-9]+\\.[0-9]+\\.[0-9]+)?$/, loader: "file-loader?name=[name].[ext]" },
 ]
+```
+
+Also you can encounter problems including `react-widgets` stylesheets if you are managing them with
+Webpack. In case you having problems providing correct path to `fonts` and `img` folders, you can
+override corresponding variables from `variables` file. In case of `scss` it should look similar to:
+
+```scss
+$rw-font-path: '~react-widgets/lib/fonts';
+$rw-img-path:  '~react-widgets/lib/img';
+
+@import '~react-widgets/lib/scss/react-widgets';
 ```
 
 #### Global Build
@@ -119,12 +133,16 @@ jQuery `$.animate()` API closely so you can use it as a drop in replacement.
 ##### With the Configure module
 ```js
 require('react-widgets/lib/configure')
-  .setAnimate((element, props, duration, ease, callback) => $(element).animate(props, duration, callback))
+  .setAnimate(function (element, props, duration, ease, callback) {
+    $(element).animate(props, duration, callback)
+  })
 ```
 ##### From the main export
 ```js
 require('react-widgets')
-  .setAnimate((element, props, duration, ease, callback) => $(element).animate(props, duration, callback))
+  .setAnimate(function (element, props, duration, ease, callback) {
+    $(element).animate(props, duration, callback)
+  })
 ```
 
 ## Theming
