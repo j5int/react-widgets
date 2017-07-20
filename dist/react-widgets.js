@@ -8280,6 +8280,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	  onToggle: _propTypes2.default.func,
 	  currentDate: _propTypes2.default.instanceOf(Date),
 	  onCurrentDateChange: _propTypes2.default.func,
+	  onTimeSelect: _propTypes2.default.func,
+	  onDateSelect: _propTypes2.default.func,
 	  //------------------------------------
 
 	  onSelect: _propTypes2.default.func,
