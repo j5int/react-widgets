@@ -8627,6 +8627,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    if (valueInput && (0, _activeElement2.default)() !== _compat2.default.findDOMNode(valueInput)) valueInput.focus();
 	  },
 	  handleDateSelect: function handleDateSelect(date) {
+	    (0, _widgetHelpers.notify)(this.props.onDateSelect, [date]);
 	    var format = getFormat(this.props),
 	        dateTime = _dates2.default.merge(date, this.props.value, this.props.currentDate),
 	        dateStr = formatDate(date, format, this.props.culture);
@@ -8637,6 +8638,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    this.focus();
 	  },
 	  handleTimeSelect: function handleTimeSelect(datum) {
+	    (0, _widgetHelpers.notify)(this.props.onTimeSelect, [datum]);
 	    var format = getFormat(this.props),
 	        dateTime = _dates2.default.merge(this.props.value, datum.date, this.props.currentDate),
 	        dateStr = formatDate(datum.date, format, this.props.culture);
@@ -8864,10 +8866,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var times = [],
 	        i = 0,
 	        values = this._dateValues(props),
-	        start = values.min,
+	        start = new Date(1970, 0, 1),
+	        end = _dates3.default.add(start, 1, 'day'),
 	        startDay = _dates3.default.date(start);
 
-	    while (_dates3.default.date(start) === startDay && _dates3.default.lte(start, values.max)) {
+	    while (_dates3.default.date(start) === startDay && _dates3.default.lte(start, end)) {
 	      i++;
 	      times.push({ date: start, label: _localizers.date.format(start, format(props), props.culture) });
 	      start = _dates3.default.add(start, props.step || 30, 'minutes');
