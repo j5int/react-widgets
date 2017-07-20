@@ -1,14 +1,19 @@
 import React from 'react';
+import PropTypes from 'prop-types';
+import _  from './util/_';
 import caretPos from './util/caret';
 import compat from './util/compat';
+
+import Input from './Input';
 
 export default React.createClass({
 
   displayName: 'ComboboxInput',
 
   propTypes: {
-    value:        React.PropTypes.string,
-    onChange:     React.PropTypes.func.isRequired
+    value: PropTypes.string,
+    suggest: PropTypes.bool,
+    onChange: PropTypes.func.isRequired
   },
 
   componentDidUpdate() {
@@ -31,17 +36,16 @@ export default React.createClass({
     }
   },
 
-  render(){
+  render() {
+    let { onKeyDown, ...props } = this.props;
+
+    delete props.suggest;
+
     return (
-      <input
-        {...this.props }
-        type='text'
-        aria-disabled={this.props.disabled}
-        aria-readonly={this.props.readOnly}
-        className={this.props.className + ' rw-input'}
-        onKeyDown={this.props.onKeyDown}
-        onChange={this._change}
-        value={this.props.value == null ? '' : this.props.value}
+      <Input
+        {...props}
+        onKeyDown={onKeyDown}
+        onChange={this.handleChange}
       />
     )
   },
@@ -62,7 +66,7 @@ export default React.createClass({
     removeCaret && caretPos(compat.findDOMNode(this), end, end)
   },
 
-  _change(e) {
+  handleChange(e) {
     var val = e.target.value
       , pl = !!this.props.placeholder
 

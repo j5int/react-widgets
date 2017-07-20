@@ -1,10 +1,11 @@
 import invariant from 'invariant';
 import { has } from './_';
-import React from 'react';
 
-const localePropType = React.PropTypes.oneOfType([
-        React.PropTypes.string,
-        React.PropTypes.func
+import PropTypes from 'prop-types';
+
+const localePropType = PropTypes.oneOfType([
+        PropTypes.string,
+        PropTypes.func
       ])
 
 const REQUIRED_NUMBER_FORMATS = [ 'default' ];
@@ -42,7 +43,7 @@ function checkFormats(requiredFormats, formats){
 
 let _numberLocalizer = createWrapper('NumberPicker')
 
-export function setNumber({ format, parse, precision = () => null, formats, propType }) {
+export function setNumber({ format, parse, decimalChar = () => '.', precision = () => null, formats, propType }) {
   invariant(typeof format === 'function'
     , 'number localizer `format(..)` must be a function')
   invariant(typeof parse === 'function'
@@ -50,17 +51,20 @@ export function setNumber({ format, parse, precision = () => null, formats, prop
 
   checkFormats(REQUIRED_NUMBER_FORMATS, formats)
 
+  formats.editFormat = formats.editFormat || (str => parseFloat(str));
+
   _numberLocalizer = {
     formats,
     precision,
+    decimalChar,
     propType: propType || localePropType,
 
     format(value, str, culture){
       return _format(this, format, value, str, culture)
     },
 
-    parse(value, culture) {
-      let result = parse.call(this, value, culture)
+    parse(value, culture, format) {
+      let result = parse.call(this, value, culture, format)
       invariant(result == null || typeof result === 'number'
         , 'number localizer `parse(..)` must return a number, null, or undefined')
       return result
@@ -107,6 +111,9 @@ export let number = {
   format(...args){
     return _numberLocalizer.format(...args)
   },
+  decimalChar(...args){
+    return _numberLocalizer.decimalChar(...args)
+  },
   precision(...args){
     return _numberLocalizer.precision(...args)
   }
@@ -135,7 +142,7 @@ function createWrapper(){
   let dummy = {};
 
   if (process.env.NODE_ENV !== 'production' ) {
-    ['formats', 'parse', 'format', 'firstOfWeek', 'precision']
+    ['formats', 'parse', 'format', 'firstOfWeek', 'precision', 'propType']
       .forEach(name => Object.defineProperty(dummy, name, {
         enumerable: true,
         get(){

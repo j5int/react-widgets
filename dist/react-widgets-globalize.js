@@ -1,4 +1,4 @@
-/*! (c) 2015 Jason Quense | https://github.com/jquense/react-widgets/blob/master/License.txt */
+/*! (c) 2017 Jason Quense | https://github.com/jquense/react-widgets/blob/master/License.txt */
 /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
 /******/ 	var installedModules = {};
@@ -43,20 +43,37 @@
 /************************************************************************/
 /******/ ([
 /* 0 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
+
+	/*** IMPORTS FROM imports-loader ***/
+	var module = __webpack_require__(1);
+	var args = [Globalize];
+
+
+	if (typeof module === 'function') {
+	  module.apply(null, args || [])
+	}
+
+
+
+/***/ }),
+/* 1 */
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var babelHelpers = __webpack_require__(1);
-
 	exports.__esModule = true;
-	exports['default'] = globalizeLocalizers;
+	exports.default = globalizeLocalizers;
 
-	var _react = __webpack_require__(2);
+	var _propTypes = __webpack_require__(2);
 
-	var _configure = __webpack_require__(3);
+	var _propTypes2 = _interopRequireDefault(_propTypes);
 
-	var _configure2 = babelHelpers.interopRequireDefault(_configure);
+	var _configure = __webpack_require__(7);
+
+	var _configure2 = _interopRequireDefault(_configure);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 	function endOfDecade(date) {
 	  date = new Date(date);
@@ -73,9 +90,9 @@
 	}
 
 	function globalizeLocalizers(globalize) {
-	  var localizers = globalize.load ? newGlobalize(globalize) : oldGlobalize(globalize);
+	  var localizers = globalize.locale && !globalize.cultures ? newGlobalize(globalize) : oldGlobalize(globalize);
 
-	  _configure2['default'].setLocalizers(localizers);
+	  _configure2.default.setLocalizers(localizers);
 	  return localizers;
 	}
 
@@ -89,7 +106,7 @@
 	    formats: {
 	      date: { date: 'short' },
 	      time: { time: 'short' },
-	      'default': { datetime: 'medium' },
+	      default: { datetime: 'medium' },
 	      header: 'MMMM yyyy',
 	      footer: { date: 'full' },
 	      weekday: 'eeeeee',
@@ -106,7 +123,7 @@
 	      }
 	    },
 
-	    propType: _react.PropTypes.oneOfType([_react.PropTypes.string, _react.PropTypes.object, _react.PropTypes.func]),
+	    propType: _propTypes2.default.oneOfType([_propTypes2.default.string, _propTypes2.default.object, _propTypes2.default.func]),
 
 	    firstOfWeek: function firstOfWeek(culture) {
 	      var date = new Date();
@@ -115,12 +132,10 @@
 
 	      return Math.abs(date.getDay() - localeDay);
 	    },
-
 	    parse: function parse(value, format, culture) {
 	      format = typeof format === 'string' ? { raw: format } : format;
 	      return locale(culture).parseDate(value, format);
 	    },
-
 	    format: function format(value, _format, culture) {
 	      _format = typeof _format === 'string' ? { raw: _format } : _format;
 	      return locale(culture).formatDate(value, _format);
@@ -129,15 +144,15 @@
 
 	  var number = {
 	    formats: {
-	      'default': { maximumFractionDigits: 0 }
+	      default: { maximumFractionDigits: 0 }
 	    },
 
-	    propType: _react.PropTypes.oneOfType([_react.PropTypes.object, _react.PropTypes.func]),
+	    propType: _propTypes2.default.oneOfType([_propTypes2.default.object, _propTypes2.default.func]),
 
-	    parse: function parse(value, format, culture) {
-	      return locale(culture).parseNumber(value, format);
+	    // TODO major bump consistent ordering
+	    parse: function parse(value, culture) {
+	      return locale(culture).parseNumber(value);
 	    },
-
 	    format: function format(value, _format2, culture) {
 	      if (value == null) return value;
 
@@ -145,7 +160,10 @@
 
 	      return locale(culture).formatNumber(value, _format2);
 	    },
-
+	    decimalChar: function decimalChar(format, culture) {
+	      var str = this.format(1.1, { raw: '0.0' }, culture);
+	      return str[str.length - 2] || '.';
+	    },
 	    precision: function precision(format) {
 	      return !format || format.maximumFractionDigits == null ? null : format.maximumFractionDigits;
 	    }
@@ -182,7 +200,7 @@
 	    formats: {
 	      date: 'd',
 	      time: 't',
-	      'default': 'f',
+	      default: 'f',
 	      header: 'MMMM yyyy',
 	      footer: 'D',
 	      weekday: shortDay,
@@ -204,40 +222,46 @@
 	    parse: function parse(value, format, culture) {
 	      return globalize.parseDate(value, format, culture);
 	    },
-
 	    format: function format(value, _format3, culture) {
 	      return globalize.format(value, _format3, culture);
 	    }
 	  };
 
+	  function formatData(format, _culture) {
+	    var culture = getCulture(_culture),
+	        numFormat = culture.numberFormat;
+
+	    if (typeof format === 'string') {
+	      if (format.indexOf('p') !== -1) numFormat = numFormat.percent;
+	      if (format.indexOf('c') !== -1) numFormat = numFormat.curency;
+	    }
+
+	    return numFormat;
+	  }
+
 	  var number = {
 
 	    formats: {
-	      'default': 'D'
+	      default: 'D'
 	    },
 
+	    // TODO major bump consistent ordering
 	    parse: function parse(value, culture) {
 	      return globalize.parseFloat(value, 10, culture);
 	    },
-
 	    format: function format(value, _format4, culture) {
 	      return globalize.format(value, _format4, culture);
 	    },
-
+	    decimalChar: function decimalChar(format, culture) {
+	      var data = formatData(format, culture);
+	      return data['.'] || '.';
+	    },
 	    precision: function precision(format, _culture) {
-	      var culture = getCulture(_culture),
-	          numFormat = culture.numberFormat;
+	      var data = formatData(format, _culture);
 
-	      if (typeof format === 'string') {
-	        if (format.length > 1) return parseFloat(format.substr(1));
+	      if (typeof format === 'string' && format.length > 1) return parseFloat(format.substr(1));
 
-	        if (format.indexOf('p') !== -1) numFormat = numFormat.percent;
-	        if (format.indexOf('c') !== -1) numFormat = numFormat.curency;
-
-	        return numFormat.decimals || null;
-	      }
-
-	      return null;
+	      return data ? data.decimals : null;
 	    }
 	  };
 
@@ -245,117 +269,235 @@
 	}
 	module.exports = exports['default'];
 
-/***/ },
-/* 1 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function (root, factory) {
-	  if (true) {
-	    !(__WEBPACK_AMD_DEFINE_ARRAY__ = [exports], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory), __WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ? (__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
-	  } else if (typeof exports === "object") {
-	    factory(exports);
-	  } else {
-	    factory(root.babelHelpers = {});
-	  }
-	})(this, function (global) {
-	  var babelHelpers = global;
-
-	  babelHelpers.createDecoratedObject = function (descriptors) {
-	    var target = {};
-
-	    for (var i = 0; i < descriptors.length; i++) {
-	      var descriptor = descriptors[i];
-	      var decorators = descriptor.decorators;
-	      var key = descriptor.key;
-	      delete descriptor.key;
-	      delete descriptor.decorators;
-	      descriptor.enumerable = true;
-	      descriptor.configurable = true;
-	      if ("value" in descriptor || descriptor.initializer) descriptor.writable = true;
-
-	      if (decorators) {
-	        for (var f = 0; f < decorators.length; f++) {
-	          var decorator = decorators[f];
-
-	          if (typeof decorator === "function") {
-	            descriptor = decorator(target, key, descriptor) || descriptor;
-	          } else {
-	            throw new TypeError("The decorator for method " + descriptor.key + " is of the invalid type " + typeof decorator);
-	          }
-	        }
-	      }
-
-	      if (descriptor.initializer) {
-	        descriptor.value = descriptor.initializer.call(target);
-	      }
-
-	      Object.defineProperty(target, key, descriptor);
-	    }
-
-	    return target;
-	  };
-
-	  babelHelpers.objectWithoutProperties = function (obj, keys) {
-	    var target = {};
-
-	    for (var i in obj) {
-	      if (keys.indexOf(i) >= 0) continue;
-	      if (!Object.prototype.hasOwnProperty.call(obj, i)) continue;
-	      target[i] = obj[i];
-	    }
-
-	    return target;
-	  };
-
-	  babelHelpers.interopRequireWildcard = function (obj) {
-	    if (obj && obj.__esModule) {
-	      return obj;
-	    } else {
-	      var newObj = {};
-
-	      if (obj != null) {
-	        for (var key in obj) {
-	          if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key];
-	        }
-	      }
-
-	      newObj["default"] = obj;
-	      return newObj;
-	    }
-	  };
-
-	  babelHelpers.interopRequireDefault = function (obj) {
-	    return obj && obj.__esModule ? obj : {
-	      "default": obj
-	    };
-	  };
-
-	  babelHelpers._extends = Object.assign || function (target) {
-	    for (var i = 1; i < arguments.length; i++) {
-	      var source = arguments[i];
-
-	      for (var key in source) {
-	        if (Object.prototype.hasOwnProperty.call(source, key)) {
-	          target[key] = source[key];
-	        }
-	      }
-	    }
-
-	    return target;
-	  };
-	})
-
-/***/ },
+/***/ }),
 /* 2 */
-/***/ function(module, exports) {
+/***/ (function(module, exports, __webpack_require__) {
 
-	module.exports = window.React;
+	/**
+	 * Copyright 2013-present, Facebook, Inc.
+	 * All rights reserved.
+	 *
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
+	 */
 
-/***/ },
+	if (false) {
+	  var REACT_ELEMENT_TYPE = (typeof Symbol === 'function' &&
+	    Symbol.for &&
+	    Symbol.for('react.element')) ||
+	    0xeac7;
+
+	  var isValidElement = function(object) {
+	    return typeof object === 'object' &&
+	      object !== null &&
+	      object.$$typeof === REACT_ELEMENT_TYPE;
+	  };
+
+	  // By explicitly using `prop-types` you are opting into new development behavior.
+	  // http://fb.me/prop-types-in-prod
+	  var throwOnDirectAccess = true;
+	  module.exports = require('./factoryWithTypeCheckers')(isValidElement, throwOnDirectAccess);
+	} else {
+	  // By explicitly using `prop-types` you are opting into new production behavior.
+	  // http://fb.me/prop-types-in-prod
+	  module.exports = __webpack_require__(3)();
+	}
+
+
+/***/ }),
 /* 3 */
-/***/ function(module, exports) {
+/***/ (function(module, exports, __webpack_require__) {
+
+	/**
+	 * Copyright 2013-present, Facebook, Inc.
+	 * All rights reserved.
+	 *
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
+	 */
+
+	'use strict';
+
+	var emptyFunction = __webpack_require__(4);
+	var invariant = __webpack_require__(5);
+	var ReactPropTypesSecret = __webpack_require__(6);
+
+	module.exports = function() {
+	  function shim(props, propName, componentName, location, propFullName, secret) {
+	    if (secret === ReactPropTypesSecret) {
+	      // It is still safe when called from React.
+	      return;
+	    }
+	    invariant(
+	      false,
+	      'Calling PropTypes validators directly is not supported by the `prop-types` package. ' +
+	      'Use PropTypes.checkPropTypes() to call them. ' +
+	      'Read more at http://fb.me/use-check-prop-types'
+	    );
+	  };
+	  shim.isRequired = shim;
+	  function getShim() {
+	    return shim;
+	  };
+	  // Important!
+	  // Keep this list in sync with production version in `./factoryWithTypeCheckers.js`.
+	  var ReactPropTypes = {
+	    array: shim,
+	    bool: shim,
+	    func: shim,
+	    number: shim,
+	    object: shim,
+	    string: shim,
+	    symbol: shim,
+
+	    any: shim,
+	    arrayOf: getShim,
+	    element: shim,
+	    instanceOf: getShim,
+	    node: shim,
+	    objectOf: getShim,
+	    oneOf: getShim,
+	    oneOfType: getShim,
+	    shape: getShim
+	  };
+
+	  ReactPropTypes.checkPropTypes = emptyFunction;
+	  ReactPropTypes.PropTypes = ReactPropTypes;
+
+	  return ReactPropTypes;
+	};
+
+
+/***/ }),
+/* 4 */
+/***/ (function(module, exports) {
+
+	"use strict";
+
+	/**
+	 * Copyright (c) 2013-present, Facebook, Inc.
+	 * All rights reserved.
+	 *
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
+	 *
+	 * 
+	 */
+
+	function makeEmptyFunction(arg) {
+	  return function () {
+	    return arg;
+	  };
+	}
+
+	/**
+	 * This function accepts and discards inputs; it has no side effects. This is
+	 * primarily useful idiomatically for overridable function endpoints which
+	 * always need to be callable, since JS lacks a null-call idiom ala Cocoa.
+	 */
+	var emptyFunction = function emptyFunction() {};
+
+	emptyFunction.thatReturns = makeEmptyFunction;
+	emptyFunction.thatReturnsFalse = makeEmptyFunction(false);
+	emptyFunction.thatReturnsTrue = makeEmptyFunction(true);
+	emptyFunction.thatReturnsNull = makeEmptyFunction(null);
+	emptyFunction.thatReturnsThis = function () {
+	  return this;
+	};
+	emptyFunction.thatReturnsArgument = function (arg) {
+	  return arg;
+	};
+
+	module.exports = emptyFunction;
+
+/***/ }),
+/* 5 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	/**
+	 * Copyright (c) 2013-present, Facebook, Inc.
+	 * All rights reserved.
+	 *
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
+	 *
+	 */
+
+	'use strict';
+
+	/**
+	 * Use invariant() to assert state which your program assumes to be true.
+	 *
+	 * Provide sprintf-style format (only %s is supported) and arguments
+	 * to provide information about what broke and what you were
+	 * expecting.
+	 *
+	 * The invariant message will be stripped in production, but the invariant
+	 * will remain to ensure logic does not differ in production.
+	 */
+
+	var validateFormat = function validateFormat(format) {};
+
+	if (false) {
+	  validateFormat = function validateFormat(format) {
+	    if (format === undefined) {
+	      throw new Error('invariant requires an error message argument');
+	    }
+	  };
+	}
+
+	function invariant(condition, format, a, b, c, d, e, f) {
+	  validateFormat(format);
+
+	  if (!condition) {
+	    var error;
+	    if (format === undefined) {
+	      error = new Error('Minified exception occurred; use the non-minified dev environment ' + 'for the full error message and additional helpful warnings.');
+	    } else {
+	      var args = [a, b, c, d, e, f];
+	      var argIndex = 0;
+	      error = new Error(format.replace(/%s/g, function () {
+	        return args[argIndex++];
+	      }));
+	      error.name = 'Invariant Violation';
+	    }
+
+	    error.framesToPop = 1; // we don't care about invariant's own frame
+	    throw error;
+	  }
+	}
+
+	module.exports = invariant;
+
+/***/ }),
+/* 6 */
+/***/ (function(module, exports) {
+
+	/**
+	 * Copyright 2013-present, Facebook, Inc.
+	 * All rights reserved.
+	 *
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
+	 */
+
+	'use strict';
+
+	var ReactPropTypesSecret = 'SECRET_DO_NOT_PASS_THIS_OR_YOU_WILL_BE_FIRED';
+
+	module.exports = ReactPropTypesSecret;
+
+
+/***/ }),
+/* 7 */
+/***/ (function(module, exports) {
 
 	module.exports = window.ReactWidgets;
 
-/***/ }
+/***/ })
 /******/ ]);

@@ -1,8 +1,8 @@
 'use strict';
 var React = require('react')
   , dates = require('date-arithmetic')
-  , Button = require('../../bootstrap').Button
-  , ButtonGroup = require('../../bootstrap').ButtonGroup
+var Button      = require('react-bootstrap/lib/Button')
+var ButtonGroup = require('react-bootstrap/lib/ButtonGroup')
   , RW = require('../../../src/index');
 
 require('globalize/lib/cultures/globalize.culture.en-GB');
@@ -39,7 +39,7 @@ module.exports = React.createClass({
       initialView: this.state.initialView,
       disabled: this.state.disabled === 'disabled',
       readOnly: this.state.disabled === 'readonly',
-      isRtl: this.state.isRtl
+      isRtl: !!this.state.isRtl
     }
 
 
@@ -62,9 +62,10 @@ module.exports = React.createClass({
                 <div className='checkbox'>
                   <label>
                     <input type='checkbox'
-                      checked={this.state.isRtl}
-                      onChange={this._set.bind(null, 'isRtl', !this.state.isRtl)}/>
-                      Right to Left
+                      checked={!!this.state.isRtl}
+                      onChange={this._set.bind(null, 'isRtl', !this.state.isRtl)}
+                    />
+                    Right to Left
                   </label>
                 </div>
               </div>

@@ -15,11 +15,12 @@ var Calendar = require('../src/Calendar.jsx')
 var DateTimePicker = require('../lib/DateTimePicker')
 var NumberPicker = require('../src/NumberPicker.jsx')
 // var ComboBox = require('../src/Combobox.jsx')
-// var SelectList = require('../src/SelectList.jsx')
+var SelectList = require('../src/SelectList.jsx')
 // var List = require('../src/List.jsx')
 
 require('../src/less/react-widgets.less')
-require('./configure-moment')
+//require('./configure-globalize')
+//require('./configure-simplenumber')
 
 var chance = new (require('chance'))
 
@@ -90,27 +91,34 @@ var App = React.createClass({
 
           <section className="example" style={{ marginBottom: 20 }}>
             <button
-              onClick={() => this.setState({
-                calDate: dates.add(this.state.calDate, 1, 'month')
-              })}
+              onClick={this.onToggle}
             >
               add
             </button>
-            <DropdownList
-              dropUp={this.state.dropUp}
-              open={this.state.open}
-              onToggle={this.onToggle}
-              data={this.state.data}
-            />
+            <div style={{ height: 300, padding: 20,  overflow: 'auto' }}>
+              <div style={{ height: 150 }}>
+                <button>add</button>
+                <input />
+              </div>
+              <SelectList
+                multiple
+                textField='name'
+                style={{ height: 'auto', overflow: 'visible'}}
+                data={this.state.data}
+              />
+              <input />
+            </div>
           </section>
         </div>
       </div>
     )
   },
 
-  onToggle(open){
-    open && (this._changeDropUp = true)
-    this.setState({ open })
+  onToggle() {
+    this.setState({ open: true }, () => {
+      setTimeout(() => this.setState({ dropUp: true }), 1500)
+    })
+    //this.setState({ dropUp: !this.state.dropUp })
   }
 
 

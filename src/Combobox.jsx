@@ -1,65 +1,71 @@
 import React from 'react';
-import cx from 'classnames';
+import PropTypes from 'prop-types';
+import cn from 'classnames';
 import _  from './util/_';
 import filter from './util/filter';
-import Popup           from './Popup';
-import Btn             from './WidgetButton';
-import Input           from './ComboboxInput';
-import compat          from './util/compat';
+
+import Widget from './Widget';
+import Popup from './Popup';
+import Select  from './Select';
+import ComboboxInput from './ComboboxInput';
+
+import compat from './util/compat';
 import CustomPropTypes from './util/propTypes';
-import PlainList       from './List';
-import GroupableList   from './ListGroupable';
-import validateList    from './util/validateListInterface';
+import PlainList from './List';
+import GroupableList from './ListGroupable';
+
+import validateList from './util/validateListInterface';
 import createUncontrolledWidget from 'uncontrollable';
 import { dataItem, dataText, dataIndexOf } from './util/dataHelpers';
-import { widgetEditable, widgetEnabled, isDisabled, isReadOnly } from './util/interaction';
+import { widgetEditable, isDisabled, isReadOnly } from './util/interaction';
 import { instanceId, notify, isFirstFocusedRender } from './util/widgetHelpers';
 
 let defaultSuggest = f => f === true ? 'startsWith' : f ? f : 'eq'
 
-let { omit, pick } = _;
-
 let propTypes = {
-      //-- controlled props -----------
-      value:          React.PropTypes.any,
-      onChange:       React.PropTypes.func,
-      open:           React.PropTypes.bool,
-      onToggle:       React.PropTypes.func,
-      //------------------------------------
+  ...Popup.propTypes,
 
-      itemComponent:  CustomPropTypes.elementType,
-      listComponent:  CustomPropTypes.elementType,
+  //-- controlled props -----------
+  value:          PropTypes.any,
+  onChange:       PropTypes.func,
+  open:           PropTypes.bool,
+  onToggle:       PropTypes.func,
+  //------------------------------------
 
-      groupComponent: CustomPropTypes.elementType,
-      groupBy:        CustomPropTypes.accessor,
+  itemComponent:  CustomPropTypes.elementType,
+  listComponent:  CustomPropTypes.elementType,
 
-      data:           React.PropTypes.array,
-      valueField:     React.PropTypes.string,
-      textField:      CustomPropTypes.accessor,
-      name:           React.PropTypes.string,
+  groupComponent: CustomPropTypes.elementType,
+  groupBy:        CustomPropTypes.accessor,
 
-      onSelect:       React.PropTypes.func,
+  data:           PropTypes.array,
+  valueField:     PropTypes.string,
+  textField:      CustomPropTypes.accessor,
+  name:           PropTypes.string,
 
-      autoFocus:      React.PropTypes.bool,
-      disabled:       CustomPropTypes.disabled.acceptsArray,
-      readOnly:       CustomPropTypes.readOnly.acceptsArray,
+  onSelect:       PropTypes.func,
 
-      suggest:        CustomPropTypes.filter,
-      filter:         CustomPropTypes.filter,
+  autoFocus:      PropTypes.bool,
+  disabled:       CustomPropTypes.disabled.acceptsArray,
+  readOnly:       CustomPropTypes.readOnly.acceptsArray,
 
-      busy:           React.PropTypes.bool,
+  suggest:        CustomPropTypes.filter,
+  filter:         CustomPropTypes.filter,
 
-      dropUp:         React.PropTypes.bool,
-      duration:       React.PropTypes.number, //popup
+  busy:           PropTypes.bool,
 
-      placeholder:    React.PropTypes.string,
+  dropUp:         PropTypes.bool,
+  duration:       PropTypes.number,
+  delay:          PropTypes.number,
 
-      messages:       React.PropTypes.shape({
-        open:         CustomPropTypes.message,
-        emptyList:    CustomPropTypes.message,
-        emptyFilter:  CustomPropTypes.message
-      })
-    };
+  placeholder:    PropTypes.string,
+
+  messages:       PropTypes.shape({
+    open:         CustomPropTypes.message,
+    emptyList:    CustomPropTypes.message,
+    emptyFilter:  CustomPropTypes.message
+  })
+};
 
 var ComboBox = React.createClass({
 
@@ -70,7 +76,16 @@ var ComboBox = React.createClass({
     require('./mixins/DataFilterMixin'),
     require('./mixins/PopupScrollToMixin'),
     require('./mixins/RtlParentContextMixin'),
-    require('./mixins/AriaDescendantMixin')('input')
+    require('./mixins/AriaDescendantMixin')('input'),
+    require('./mixins/FocusMixin')({
+      willHandle(focused) {
+        // not suggesting anymore
+        !focused && this.refs.input.accept()
+      },
+      didHandle(focused) {
+        if (!focused) this.close()
+      }
+    })
   ],
 
   propTypes: propTypes,
@@ -119,13 +134,15 @@ var ComboBox = React.createClass({
 
     var rawIdx = dataIndexOf(data, value, valueField)
       , valueItem = rawIdx === -1 ? nextProps.value : nextProps.data[rawIdx]
-      , isSuggesting = this.refs.input.isSuggesting()
-      , items = this.process(
-          nextProps.data
-        , nextProps.value
-        , (rawIdx === -1 || isSuggesting) && dataText(valueItem, textField) )
+      , isSuggesting = this.refs.input && this.refs.input.isSuggesting()
 
-      , idx = dataIndexOf(items, value, valueField)
+    let items = this.process(
+        nextProps.data
+      , nextProps.value
+      , (rawIdx === -1 || isSuggesting) && dataText(valueItem, textField)
+    )
+
+    let idx = dataIndexOf(items, value, valueField)
       , focused = this.filterIndexOf(items, dataText(valueItem, textField));
 
     this._searchTerm = '';
@@ -139,129 +156,157 @@ var ComboBox = React.createClass({
     })
   },
 
+  renderInput(listID) {
+    let {
+        suggest
+      , filter
+      , textField
+      , busy
+      , name
+      , data
+      , value
+      , valueField
+      , autoFocus
+      , tabIndex
+      , disabled
+      , readOnly
+      , placeholder
+      , open } = this.props;
+
+    let valueItem = dataItem(data, value, valueField) // take value from the raw data
+
+    let completeType = suggest
+        ? filter ? 'both' : 'inline'
+        : filter ? 'list' : '';
+
+    return (
+      <ComboboxInput
+        ref='input'
+        id={instanceId(this, '_input')}
+        autoFocus={autoFocus}
+        tabIndex={tabIndex}
+        suggest={suggest}
+        name={name}
+        role='combobox'
+        disabled={disabled}
+        readOnly={readOnly}
+        aria-owns={listID}
+        aria-busy={!!busy}
+        aria-autocomplete={completeType}
+        aria-expanded={open}
+        aria-haspopup={true}
+        placeholder={placeholder}
+        value={dataText(valueItem, textField)}
+        onChange={this.handleInputChange}
+        onKeyDown={this.handleInputKeyDown}
+      />
+    )
+  },
+
+  renderList(List, id, messages) {
+    let { open, data } = this.props;
+    let { selectedItem, focusedItem } = this.state;
+
+    let listProps = _.pickProps(this.props, List);
+    let items = this._data();
+
+    return (
+      <List ref="list"
+        {...listProps}
+        id={id}
+        data={items}
+        selected={selectedItem}
+        focused ={focusedItem}
+        aria-hidden={!open}
+        aria-labelledby={instanceId(this)}
+        aria-live={open && 'polite'}
+        onSelect={this.handleSelect}
+        onMove={this._scrollTo}
+        messages={{
+          emptyList: data.length
+            ? messages.emptyFilter
+            : messages.emptyList
+        }}
+      />
+    )
+  },
+
   render(){
     let {
-        className, tabIndex, filter, suggest
-      , valueField, textField, groupBy
-      , messages, data, busy, dropUp, name, autoFocus
-      , placeholder, value, open
+        className
+      , duration
+      , groupBy
+      , messages
+      , busy
+      , dropUp
+      , open
       , listComponent: List } = this.props;
+
+    let { focused } = this.state;
+
+    let disabled = isDisabled(this.props)
+      , readOnly = isReadOnly(this.props)
+      , listID = instanceId(this, '_listbox');
 
     List = List || (groupBy && GroupableList) || PlainList
 
-    let elementProps = omit(this.props, Object.keys(propTypes));
-    let listProps    = pick(this.props, Object.keys(List.propTypes));
-    let popupProps   = pick(this.props, Object.keys(Popup.propTypes));
-
-    let { focusedItem, selectedItem, focused } = this.state;
-
-    let items = this._data()
-      , disabled = isDisabled(this.props)
-      , readOnly = isReadOnly(this.props)
-      , valueItem = dataItem(data, value, valueField) // take value from the raw data
-      , inputID = instanceId(this, '_input')
-      , listID = instanceId(this, '_listbox')
-      , completeType = suggest
-          ? filter ? 'both' : 'inline'
-          : filter ? 'list' : '';
-
-    let shouldRenderList = isFirstFocusedRender(this) || open;
+    let elementProps = _.omitOwnProps(this, List);
+    let shouldRenderPopup = open || isFirstFocusedRender(this);
 
     messages = msgs(messages)
 
     return (
-      <div
+      <Widget
         {...elementProps}
-        ref="element"
-        onKeyDown={this._keyDown}
-        onFocus={this._focus.bind(null, true)}
-        onBlur ={this._focus.bind(null, false)}
-        tabIndex={'-1'}
-        className={cx(className, 'rw-combobox', 'rw-widget', {
-          'rw-state-focus':     focused,
-          'rw-state-disabled':  disabled,
-          'rw-state-readonly':  readOnly,
-          'rw-rtl':             this.isRtl(),
-
-          ['rw-open' + (dropUp ? '-up' : '')]: open
-         })}
+        open={open}
+        dropUp={dropUp}
+        focused={focused}
+        disabled={disabled}
+        readOnly={readOnly}
+        onBlur={this.handleBlur}
+        onFocus={this.handleFocus}
+        onKeyDown={this.handleKeyDown}
+        className={cn(className, 'rw-combobox')}
       >
-        <Btn
-          tabIndex='-1'
-          className='rw-select'
+        <Select
           onClick={this.toggle}
           disabled={!!(disabled || readOnly)}
-        >
-          <i className={cx('rw-i rw-i-caret-down', {'rw-loading': busy})}>
-            <span className="rw-sr">
-              { _.result(messages.open, this.props) }
-            </span>
-          </i>
-        </Btn>
-        <Input
-          ref='input'
-          id={inputID}
-          autoFocus={autoFocus}
-          tabIndex={tabIndex}
-          suggest={suggest}
-          name={name}
-          role='combobox'
-          aria-owns={listID}
-          aria-busy={!!busy}
-          aria-autocomplete={completeType}
-          aria-expanded={open}
-          aria-haspopup={true}
-          placeholder={placeholder}
-          disabled={disabled}
-          readOnly={readOnly}
-          className='rw-input'
-          value={dataText(valueItem, textField) }
-          onChange={this._inputTyping}
-          onKeyDown={this._inputKeyDown}
+          busy={busy}
+          icon='caret-down'
+          label={_.result(messages.open, this.props)}
         />
-        <Popup
-          {...popupProps}
-          onOpening={() => this.refs.list.forceUpdate()}
-        >
-          <div>
-            { shouldRenderList &&
-              <List ref="list"
-                {...listProps}
-                id={listID}
-                data={items}
-                selected={selectedItem}
-                focused ={focusedItem}
-                aria-hidden={!open}
-                aria-labelledby={inputID}
-                aria-live={open && 'polite'}
-                onSelect={this._onSelect}
-                onMove={this._scrollTo}
-                messages={{
-                  emptyList: data.length
-                    ? messages.emptyFilter
-                    : messages.emptyList
-                }}/>
-            }
-          </div>
-        </Popup>
-      </div>
+        {this.renderInput(listID)}
+
+        {shouldRenderPopup &&
+          <Popup
+            open={open}
+            dropUp={dropUp}
+            duration={duration}
+            onOpening={() => this.refs.list.forceUpdate()}
+          >
+            <div>
+              {this.renderList(List, listID, messages)}
+            </div>
+          </Popup>
+        }
+      </Widget>
     )
   },
 
   @widgetEditable
-  _onSelect(data){
+  handleSelect(data){
     this.close()
     notify(this.props.onSelect, data)
     this.change(data)
     this.focus();
   },
 
-  _inputKeyDown(e){
+  handleInputKeyDown(e){
     this._deleting = e.key === 'Backspace' || e.key === 'Delete'
     this._isTyping = true
   },
 
-  _inputTyping(e){
+  handleInputChange(e){
     let { data, textField } = this.props
 
     var shouldSuggest = !!this.props.suggest
@@ -284,27 +329,12 @@ var ComboBox = React.createClass({
   },
 
   focus() {
-    this.refs.input.focus()
-  },
-
-  @widgetEnabled
-  _focus(focused, e){
-
-    !focused && this.refs.input.accept() //not suggesting anymore
-
-    this.setTimeout('focus', () => {
-
-      if( !focused) this.close()
-
-      if( focused !== this.state.focused) {
-        notify(this.props[focused ? 'onFocus' : 'onBlur'], e)
-        this.setState({ focused: focused })
-      }
-    })
+    this.refs.input &&
+      this.refs.input.focus()
   },
 
   @widgetEditable
-  _keyDown(e){
+  handleKeyDown(e){
     var self = this
       , key  = e.key
       , alt  = e.altKey
@@ -314,26 +344,25 @@ var ComboBox = React.createClass({
       , isOpen = this.props.open;
 
     notify(this.props.onKeyDown, [e])
-
     if (e.defaultPrevented)
       return
 
-    if ( key === 'End' )
+    if (key === 'End')
       if ( isOpen ) this.setState({ focusedItem: list.last() })
       else          select(list.last(), true)
 
-    else if ( key === 'Home' )
-      if ( isOpen ) this.setState({ focusedItem: list.first() })
+    else if (key === 'Home')
+      if (isOpen) this.setState({ focusedItem: list.first() })
       else          select(list.first(), true)
 
-    else if ( key === 'Escape' && isOpen )
+    else if (key === 'Escape' && isOpen)
       this.close()
 
-    else if ( key === 'Enter' && isOpen ) {
+    else if (key === 'Enter' && isOpen) {
+      e.preventDefault();
       select(this.state.focusedItem, true)
     }
-
-    else if ( key === 'ArrowDown' ) {
+    else if (key === 'ArrowDown') {
       if ( alt )
         this.open()
       else {
@@ -357,7 +386,7 @@ var ComboBox = React.createClass({
       self.refs.input.accept(true); //removes caret
 
       if(fromList)
-        return self._onSelect(item)
+        return self.handleSelect(item)
 
       self.change(item, false)
     }
@@ -423,7 +452,7 @@ var ComboBox = React.createClass({
 
 
 export default createUncontrolledWidget(
-      ComboBox, { open: 'onToggle', value: 'onChange' });
+      ComboBox, { open: 'onToggle', value: 'onChange' }, ['focus']);
 
 
 

@@ -12,15 +12,14 @@
   position:               relative;
   cursor:                 text;
   .clearfix();
-  
-  i.rw-loading {
+
+  span.rw-loading {
     position: absolute;
     right: 3px;
   }
 
   > .rw-input {
     .placeholder();
-    float:                left;
     outline:              0;
     border-width:         0;
     line-height:          normal;
@@ -49,13 +48,11 @@
   padding-right: 0;
 
   > li {
-    float:              left;
     display:            inline-block;
     margin:             1px;
     padding:            0.214em 0.15em 0.214em 0.4em;
     line-height:        1.4em;
     text-align:         center;
-    vertical-align:     middle;
     white-space:        nowrap;
     border-radius:      @border-radius-sm;
     border:             1px solid @btn-border;

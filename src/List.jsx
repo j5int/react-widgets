@@ -1,4 +1,5 @@
 import React   from 'react';
+import PropTypes from 'prop-types';
 import ListOption from './ListOption';
 import CustomPropTypes from './util/propTypes';
 import compat from './util/compat';
@@ -20,22 +21,22 @@ export default React.createClass({
   ],
 
   propTypes: {
-    data:          React.PropTypes.array,
-    onSelect:      React.PropTypes.func,
-    onMove:        React.PropTypes.func,
+    data:          PropTypes.array,
+    onSelect:      PropTypes.func,
+    onMove:        PropTypes.func,
 
     optionComponent: CustomPropTypes.elementType,
     itemComponent:   CustomPropTypes.elementType,
 
-    selected:      React.PropTypes.any,
-    focused:       React.PropTypes.any,
+    selected:      PropTypes.any,
+    focused:       PropTypes.any,
     valueField:    CustomPropTypes.accessor,
     textField:     CustomPropTypes.accessor,
 
     disabled:      CustomPropTypes.disabled.acceptsArray,
     readOnly:      CustomPropTypes.readOnly.acceptsArray,
 
-    messages:      React.PropTypes.shape({
+    messages:      PropTypes.shape({
       emptyList:   CustomPropTypes.message
     })
   },
@@ -72,10 +73,12 @@ export default React.createClass({
         className, role, data, textField, valueField
       , focused, selected, messages, onSelect
       , itemComponent: ItemComponent
-      , optionComponent: Option
-      , ...props  } = this.props
-      , id = instanceId(this)
+      , optionComponent: Option } = this.props
+
+    let id = instanceId(this)
       , items;
+
+    let elementProps = _.omitOwnProps(this);
 
     items = !data.length
       ? (
@@ -84,8 +87,8 @@ export default React.createClass({
         </li>
       ) : data.map((item, idx) => {
           var currentId = optionId(id, idx)
-            , isDisabled = isDisabledItem(item, props)
-            , isReadOnly = isReadOnlyItem(item, props);
+            , isDisabled = isDisabledItem(item, this.props)
+            , isReadOnly = isReadOnlyItem(item, this.props);
 
           return (
             <Option
@@ -118,7 +121,7 @@ export default React.createClass({
         tabIndex='-1'
         className={cn(className, 'rw-list')}
         role={role === undefined ? 'listbox' : role}
-        { ...props }
+        {...elementProps}
       >
         { items }
       </ul>

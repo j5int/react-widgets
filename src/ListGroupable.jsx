@@ -1,4 +1,5 @@
 import React   from 'react';
+import PropTypes from 'prop-types';
 import ListOption from './ListOption';
 import CustomPropTypes from './util/propTypes';
 import compat from './util/compat';
@@ -21,16 +22,16 @@ export default React.createClass({
   ],
 
   propTypes: {
-    data:           React.PropTypes.array,
-    onSelect:       React.PropTypes.func,
-    onMove:         React.PropTypes.func,
+    data:           PropTypes.array,
+    onSelect:       PropTypes.func,
+    onMove:         PropTypes.func,
 
     optionComponent: CustomPropTypes.elementType,
     itemComponent:   CustomPropTypes.elementType,
     groupComponent:  CustomPropTypes.elementType,
 
-    selected:       React.PropTypes.any,
-    focused:        React.PropTypes.any,
+    selected:       PropTypes.any,
+    focused:        PropTypes.any,
 
     valueField:     CustomPropTypes.accessor,
     textField:      CustomPropTypes.accessor,
@@ -40,7 +41,7 @@ export default React.createClass({
 
     groupBy:        CustomPropTypes.accessor,
 
-    messages:       React.PropTypes.shape({
+    messages:       PropTypes.shape({
       emptyList:    CustomPropTypes.message
     })
   },
@@ -88,17 +89,16 @@ export default React.createClass({
   },
 
   render(){
-    var {
-        className, role, data
-      , messages, onSelect, selectedIndex
-      , ...props } = this.props
-      , id = instanceId(this);
-
+    let { className, role, data, messages } = this.props
     let { sortedKeys, groups } = this.state;
+
+    let elementProps = _.omitOwnProps(this);
 
     let items = []
       , idx = -1
       , group;
+
+    let id = instanceId(this);
 
     this._currentActiveID = null;
 
@@ -125,7 +125,7 @@ export default React.createClass({
         tabIndex='-1'
         className={cn(className, 'rw-list', 'rw-list-grouped')}
         role={role === undefined ? 'listbox' : role }
-        { ...props }
+        {...elementProps}
       >
         { items }
       </ul>
@@ -201,7 +201,7 @@ export default React.createClass({
     keys = keys || []
 
     warning(typeof groupBy !== 'string' || !data.length || _.has(data[0], groupBy)
-      , `[React Widgets] You are seem to be trying to group this list by a `
+      , `[React Widgets] You seem to be trying to group this list by a `
       + `property \`${groupBy}\` that doesn't exist in the dataset items, this may be a typo`)
 
     return data.reduce((grps, item) => {

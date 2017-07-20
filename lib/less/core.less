@@ -3,8 +3,6 @@
 //   outline: 1px red solid !important;
 // }
 
-
-
 .rw-sr {
   position: absolute;
   width: 1px;
@@ -82,7 +80,7 @@
   border-radius: @input-border-radius;
   margin-bottom: 2px;
 
-  .rw-rtl &{
+  .rw-rtl & {
     padding-left: 1.9em;
     padding-right:  0;
   }
@@ -99,7 +97,7 @@
 }
 
 .rw-i.rw-loading {
-  background: url("../img/loading.gif") no-repeat center;
+  background: url("@{rw-img-path}/loading.gif") no-repeat center;
   width: 16px;
   height: 100%;
 
@@ -115,7 +113,7 @@
 
   &:after{
     content: '';
-    background: url("../img/loader-big.gif") no-repeat center;
+    background: url("@{rw-img-path}/loader-big.gif") no-repeat center;
     position:   absolute;
     background-color: #fff;
     opacity: 0.7;
@@ -138,7 +136,7 @@
   .state-select();
 }
 
-&.rw-state-disabled {
+.rw-state-disabled {
   .state-disabled();
   opacity: 1;
 }
@@ -162,6 +160,7 @@
 
 ul.rw-list {
   .list-unstyled();
+
   padding: 5px 0;
   overflow: auto;
   outline: 0;
@@ -266,7 +265,7 @@ ul.rw-list {
   .rw-input {
     .border-left-radius(@input-border-radius);
 
-    .rw-rtl&{
+    .rw-rtl & {
       .border-left-radius(0);
       .border-right-radius(@input-border-radius);
     }
@@ -274,11 +273,11 @@ ul.rw-list {
 
   > .rw-select {
     border-left: @input-border 1px solid;
+  }
 
-    .rw-rtl&{
-      border-right: @input-border 1px solid;
-      border-left:  none;
-    }
+  &.rw-rtl > .rw-select {
+    border-right: @input-border 1px solid;
+    border-left:  none;
   }
 
   &.rw-state-focus,
@@ -354,7 +353,7 @@ ul.rw-list {
 .rw-combobox input.rw-input,
 .rw-datetimepicker input.rw-input,
 .rw-numberpicker input.rw-input {
-  .box-shadow(~"inset 0 1px 1px rgba(0,0,0,.075)");
+  .box-shadow(inset 0 1px 1px rgba(0,0,0,.075));
 }
 
 
