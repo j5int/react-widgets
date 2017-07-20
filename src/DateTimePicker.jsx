@@ -38,6 +38,8 @@ let propTypes = {
     onToggle:       PropTypes.func,
     currentDate:    PropTypes.instanceOf(Date),
     onCurrentDateChange: PropTypes.func,
+    onTimeSelect: PropTypes.func,
+    onDateSelect: PropTypes.func,
     //------------------------------------
 
     onSelect:       PropTypes.func,
