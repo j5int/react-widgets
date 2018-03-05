@@ -61,6 +61,13 @@ let propTypes = {
   onSelect: PropTypes.func,
 
   /**
+   * Custom j5 event handlers added in fork
+   */
+  onTimeSelect: PropTypes.func,
+  onDateSelect: PropTypes.func,
+
+
+  /**
    * The minimum Date that can be selected. Min only limits selection, it doesn't constrain the date values that
    * can be typed or pasted into the widget. If you need this behavior you can constrain values via
    * the `onChange` handler.
@@ -279,6 +286,8 @@ class DateTimePicker extends React.Component {
 
   @widgetEditable
   handleDateSelect = date => {
+
+    notify(this.props.onDateSelect, [date])
     var format = getFormat(this.props),
       dateTime = dates.merge(date, this.props.value, this.props.currentDate),
       dateStr = formatDate(date, format, this.props.culture)
@@ -291,6 +300,7 @@ class DateTimePicker extends React.Component {
 
   @widgetEditable
   handleTimeSelect = datum => {
+    notify(this.props.onTimeSelect, [datum])
     var format = getFormat(this.props),
       dateTime = dates.merge(
         this.props.value,

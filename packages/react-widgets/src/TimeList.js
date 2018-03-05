@@ -111,10 +111,11 @@ class TimeList extends React.Component {
   getDates(props = this.props) {
     let times = []
     let values = this.getBounds(props)
-    let start = values.min
+    let start = new Date(1970, 0, 1)
+    let end = dates.add(start, 1, 'day')
     let startDay = dates.date(start)
 
-    while (dates.date(start) === startDay && dates.lte(start, values.max)) {
+    while (dates.date(start) === startDay && dates.lte(start, end)) {
       times.push({
         date: start,
         label: dateLocalizer.format(start, format(props), props.culture),
